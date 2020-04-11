@@ -6,6 +6,9 @@ import pandas as pd
 import os
 
 from dotenv import load_dotenv
+from pathlib import Path
+
+from ticket_data import Ticket_Data
 
 load_dotenv()
 
@@ -18,19 +21,12 @@ parameters = {
     "locale":'en',
     "city" : 'london',
     "page" : '0',
-    "size" : '200' # Number of results per page
+    "size" : '2' # Number of results per page
 }
 
-data = {
-    'event' : [],
-    'date' : [],
-    'country' : [],
-    'city' : [],
-    'price (min)' : [],
-    'price (max)' : [],
-    'venue' : [],
-    'genre' : []
-}
+# Define data dictionary
+data = Ticket_Data()
+# data.add_data(Path('./Data/tm_db.json'))
 
 page_num = 0
 
@@ -54,44 +50,44 @@ while True:
         for event in range(0,len(tm_events)):
 
             # Event name
-            data['event'].append(tm_events[event]['name'])
-            data['date'].append(tm_events[event]['dates']['start']['localDate'])
+            data.data['event'].append(tm_events[event]['name'])
+            data.data['date'].append(tm_events[event]['dates']['start']['localDate'])
             
             # Event country
             if 'venues' in tm_events[event]['_embedded'] and 'country' in tm_events[event]['_embedded']['venues'][0] and 'name' in tm_events[event]['_embedded']['venues'][0]['country']:
-                data['country'].append(tm_events[event]['_embedded']['venues'][0]['country']['name']) 
+                data.data['country'].append(tm_events[event]['_embedded']['venues'][0]['country']['name']) 
             else:
-                data['country'].append('N/A')
+                data.data['country'].append('N/A')
 
             # Event city
             if 'venues' in tm_events[event]['_embedded'] and 'city' in tm_events[event]['_embedded']['venues'][0] and 'name' in tm_events[event]['_embedded']['venues'][0]['city']:
-                data['city'].append(tm_events[event]['_embedded']['venues'][0]['city']['name']) 
+                data.data['city'].append(tm_events[event]['_embedded']['venues'][0]['city']['name']) 
             else:
-                data['city'].append('N/A')
+                data.data['city'].append('N/A')
 
             # Min price of ticket
             if 'priceRanges' in tm_events[event]:
-                data['price (min)'].append(tm_events[event]['priceRanges'][0]['min']) 
+                data.data['price (min)'].append(tm_events[event]['priceRanges'][0]['min']) 
             else:
-                data['price (min)'].append('N/A')
+                data.data['price (min)'].append('N/A')
 
             # Max price of ticket
             if 'priceRanges' in tm_events[event]:
-                data['price (max)'].append(tm_events[event]['priceRanges'][0]['max']) 
+                data.data['price (max)'].append(tm_events[event]['priceRanges'][0]['max']) 
             else:
-                data['price (max)'].append('N/A')
+                data.data['price (max)'].append('N/A')
 
             # Event Venue
             if 'venues' in tm_events[event]['_embedded'] and 'name' in tm_events[event]['_embedded']['venues'][0]:
-                data['venue'].append(tm_events[event]['_embedded']['venues'][0]['name']) # Venue
+                data.data['venue'].append(tm_events[event]['_embedded']['venues'][0]['name']) # Venue
             else:
-                data['venue'].append('N/A')
+                data.data['venue'].append('N/A')
             
             # Event Genre
             if 'classifications' in tm_events[event] and 'genre' in tm_events[event]['classifications'][0] and 'name' in tm_events[event]['classifications'][0]['genre']:
-                data['genre'].append(tm_events[event]['classifications'][0]['genre']['name']) # Venue
+                data.data['genre'].append(tm_events[event]['classifications'][0]['genre']['name']) # Venue
             else:
-                data['genre'].append('N/A')
+                data.data['genre'].append('N/A')
 
             
 
@@ -100,13 +96,20 @@ while True:
 
     page_num += 1
 
+    if page_num > 1:
+        break
+
     # Pause loop
     if page_num % 5 == 0:
         time.sleep(1)
 
+
+
+# TODO: Logic to remove duplicates
+
 # Create DataFrame 
-df = pd.DataFrame(data) 
+df = pd.DataFrame(data.data)
   
-# Print the output. 
-# TODO: determine how we want to export dataframe
-print(df.head())
+# TODO: Error handling, again
+# Export data to .json file 
+df.to_json(Path('./data/tm_db.json'),orient='records')
