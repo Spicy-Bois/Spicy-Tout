@@ -18,7 +18,6 @@ class Ticket_Data:
     def add_data(self, events_file):
         with open(events_file, 'r') as events:
             dict = json.load(events)
-
         
         for entry in dict:
             for key, value in entry.items():

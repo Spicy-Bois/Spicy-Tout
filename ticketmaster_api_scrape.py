@@ -1,20 +1,24 @@
+'''
+Script takes Ticketmaster API (specifically the events API here) and scrapes initial data for the model, 
+exporting to a JSON file in the Data folder.
+'''
+
 # Import Libraries
-import requests
 import json
 import time
-import pandas as pd 
 import os
-
-from dotenv import load_dotenv
 from pathlib import Path
 
+import pandas as pd 
+from dotenv import load_dotenv
+
 from ticket_data import Ticket_Data
+from tm_api import TM_API
 
 load_dotenv()
 
 # API portal URL
-TM_KEY = os.getenv('TM_API_KEY')
-api_url = f'https://app.ticketmaster.com/discovery/v2/events.json?&apikey={TM_KEY}'
+events_api = TM_API('https://app.ticketmaster.com/discovery/v2/events.json?&apikey=',os.getenv('TM_API_KEY'))
 
 # API Query Parameters
 parameters = {
@@ -26,19 +30,15 @@ parameters = {
 
 # Define data dictionary
 data = Ticket_Data()
-# data.add_data(Path('./Data/tm_db.json'))
+data.add_data(Path('./Data/tm_db.json'))
 
-page_num = 0
+# Get request
+response = events_api.get_response(parameters)
 
 # Loop across TM pages - Currently uses if statements for error handling
 # TODO: include proper error handling
-
+page_num = 0
 while True:
-
-    # Set page number
-    parameters['page'] = str(page_num)
-    # Get request
-    response = requests.get(api_url, params=parameters)
     
     # Check for valid output in response
     if '_embedded' in response.json(): 
@@ -89,23 +89,20 @@ while True:
             else:
                 data.data['genre'].append('N/A')
 
-            
-
     else:
         break
 
+    # Itterate through pages and update API response
     page_num += 1
-
-    if page_num > 1:
-        break
-
     # Pause loop
     if page_num % 5 == 0:
         time.sleep(1)
-
-
+    response = events_api.change_page(page_num)
 
 # TODO: Logic to remove duplicates
+# --------------------------------
+# --------------------------------
+# --------------------------------
 
 # Create DataFrame 
 df = pd.DataFrame(data.data)
