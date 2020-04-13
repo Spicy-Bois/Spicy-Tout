@@ -25,12 +25,15 @@ parameters = {
     "locale":'en',
     "city" : 'london',
     "page" : '0',
-    "size" : '2' # Number of results per page
+    "size" : '200' # Number of results per page
 }
 
 # Define data dictionary
 data = Ticket_Data()
-data.add_data(Path('./Data/tm_db.json'))
+
+# Check whether file is empty
+if os.stat(Path('./Data/tm_db.json')).st_size != 0:
+    data.add_data(Path('./Data/tm_db.json'))
 
 # Get request
 response = events_api.get_response(parameters)
@@ -99,14 +102,12 @@ while True:
         time.sleep(1)
     response = events_api.change_page(page_num)
 
-# TODO: Logic to remove duplicates
-# --------------------------------
-# --------------------------------
-# --------------------------------
-
 # Create DataFrame 
 df = pd.DataFrame(data.data)
-  
+
+# Remove duplicates
+df.drop_duplicates(keep='first',inplace=True) 
+
 # TODO: Error handling, again
 # Export data to .json file 
 df.to_json(Path('./data/tm_db.json'),orient='records')
