@@ -1,3 +1,4 @@
 .env
 spicy-project-venv
 .vscode
+__pycache__
